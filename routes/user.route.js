@@ -1,45 +1,31 @@
-const Todo = require("./../models/Todo.model");
 const User = require("./../models/User.model");
+const Todo = require("./../models/Todo.model");
 
 const router = require("express").Router();
 
 // GET request
 router.get("/", async function (req, res) {
   try {
-    const allTodos = await Todo.find({});
+    const allUsers = await User.find({}).populate("todos");
 
-    res.status(200).json(allTodos);
+    res.status(200).json(allUsers);
   } catch (error) {
     console.log(error);
   }
 });
 
 // POST request
-router.post("/", async function (req, res) {
+router.post("/", function (req, res) {
   try {
-    const { todo, user } = req.body;
+    const { name } = req.body;
 
-    const newTodo = new Todo({
-      todo,
-      user,
+    const newUser = new User({
+      name,
     });
 
-    const findUserUpdate = await User.findByIdAndUpdate(
-      user,
-      {
-        $push: {
-          todos: newTodo._id,
-        },
-      },
-      {
-        new: true,
-      }
-    );
+    newUser.save();
 
-    findUserUpdate.save();
-    newTodo.save();
-
-    res.status(200).json({ newTodo, findUserUpdate });
+    res.status(200).json(newUser);
   } catch (error) {
     res.status(500);
     console.log(error);
@@ -51,13 +37,14 @@ router.get("/:id", async function (req, res) {
   try {
     const id = req.params.id;
 
-    const findTodo = await Todo.findById(id).populate("user");
-    if (!findTodo) {
+    const findUser = await User.findById(id).populate("todos");
+    if (!findUser) {
       res.status(404).json({
         message: "Couldn't find a Todo with that id",
       });
     }
-    res.status(200).json(findTodo);
+    
+    res.status(200).json(findUser);
   } catch (error) {
     console.log(error);
   }
@@ -124,23 +111,3 @@ router.get("/:id", async function (req, res) {
 // });
 
 module.exports = router;
-
-/**
- * Todo List
- * {
- *  id: 1, unique,
- *  name: "updated",
- *  description: "",
- *  created_at: "2015-12-01T00:00:00",
- *  updated_at: "2015-12-01T00:00:00"
- * }
- *
- * @Authentication
- * {
- *  id: 1, unique,
- *  email: "updated@gmail.com",
- *  password: "updated"
- *  created_at: "2015-12-01T00:00:00",
- *  updated_at: "2015-12-01T00:00:00"
- * }
- */
